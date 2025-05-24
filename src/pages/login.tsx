@@ -11,7 +11,9 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      let response = await signInWithEmailAndPassword(auth, email, password);
+      console.log("Login successful:", response);
+      localStorage.setItem("user", JSON.stringify(response.user));
       navigate("/watchlist");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {

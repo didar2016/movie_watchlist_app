@@ -7,6 +7,8 @@ import { useAuth } from "../auth/context";
 const Navbar: React.FC = () => {
   const { currentUser } = useAuth();
 
+  console.log("Current User:", currentUser);
+
   const WatchlistIcon = ({ count = 5 }) => (
     <div className="relative">
       <svg
@@ -30,8 +32,8 @@ const Navbar: React.FC = () => {
       )}
     </div>
   );
-  const [searchTerm, setSearchTerm] = React.useState("d");
-  const [showDropdown, setShowDropdown] = React.useState(true);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [showDropdown, setShowDropdown] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
   // Dummy search results

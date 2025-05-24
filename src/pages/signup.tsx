@@ -9,9 +9,24 @@ const Signup: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const navigate = useNavigate();
 
+  // Function to handle signup  
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+  }
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert("Please enter a valid email address");
+      return;
+    }
     
+    if (password.length < 6) {
+      alert("Password must be at least 6 characters long");
+      return;
+    }
+
     if (password !== confirmPassword) {
       alert("Passwords don't match");
       return;
@@ -19,12 +34,23 @@ const Signup: React.FC = () => {
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
+      alert("Signup successful! You can now log in.")
       navigate("/watchlist");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(err.message);
+      console.error("Error during signup:", err);
     }
   };
+
+
+
+
+
+
+
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -54,7 +80,7 @@ const Signup: React.FC = () => {
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
               />
             </div>
             <div>
@@ -136,3 +162,22 @@ const Signup: React.FC = () => {
 };
 
 export default Signup;
+
+
+
+
+
+// import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+
+// const auth = getAuth();
+// createUserWithEmailAndPassword(auth, email, password)
+//   .then((userCredential) => {
+//     // Signed up 
+//     const user = userCredential.user;
+//     // ...
+//   })
+//   .catch((error) => {
+//     const errorCode = error.code;
+//     const errorMessage = error.message;
+//     // ..
+//   });
