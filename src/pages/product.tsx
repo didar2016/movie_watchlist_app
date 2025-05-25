@@ -4,6 +4,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { auth, db } from "../firebase";
+import { addDoc, arrayRemove, arrayUnion, collection, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { ToastContainer, toast } from "react-toastify";
 
 // Define the interface for movie ratings
 interface MovieRating {
@@ -40,10 +43,22 @@ interface MovieData {
   Response: string;
 }
 
-const MovieCard: React.FC<{ movie: MovieData }> = ({ movie }) => {
+
+
+interface MovieCardProps {
+  movie: MovieData | null;
+  currentUser?: any;
+  watchlist?: any[];
+  setToggle?: React.Dispatch<React.SetStateAction<boolean>>;
+  toggle?: boolean;
+}
+
+const MovieCard: React.FC<MovieCardProps> = ({ movie, currentUser, watchlist,  toggle, setToggle }) => {
   // const [showDetails, setShowDetails] = useState(false);
   const navigate = useNavigate();
-
+    const [Loading, setLoading] = useState(false);
+  
+ const notify = (mesg:any) => toast(mesg);
   // Define state for the user
   const [user, setUser] = useState<string | null>(null);
 
@@ -55,15 +70,103 @@ const MovieCard: React.FC<{ movie: MovieData }> = ({ movie }) => {
     }
   }, []);
 
-  const addToWishlist = () => {
-    // Logic to add the movie to the wishlist
-    alert(`${movie.Title} has been added to your watchlist!`);
+ const addTowatchlist = async (movie: MovieData) => {
+    try {
+      setLoading(true);
+      const user = auth.currentUser;
+
+      if (!user) {
+        notify("Please log in to add movies to your watchlist");
+        return;
+      }
+
+      const watchlistRef = collection(db, "watchlist");
+
+      const q = query(watchlistRef, where("userid", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const watchlistDoc = querySnapshot.docs[0];
+        const currentData = watchlistDoc.data();
+
+        await updateDoc(watchlistDoc.ref, {
+          count: (currentData.count || 0) + 1,
+          watchlist: arrayUnion(movie.imdbID),
+        });
+     
+       notify("Movie added to watchlist successfully!");
+      } else {
+        const docRef = await addDoc(collection(db, "watchlist"), {
+          userid: user.uid,
+          count: 1,
+          watchlist: [movie?.imdbID],
+        });
+
+      }
+
+      if (setToggle) setToggle(!toggle);
+      
+      setLoading(false)
+        // Toggle to update the watchlist
+    } catch (error) {
+      throw error;
+    }
   };
 
+
+  const removeFromWatchlist = async (movie: MovieData) => {
+  try {
+    setLoading(true);
+    const user = auth.currentUser;
+
+    if (!user) {
+      notify("Please log in to remove movies from your watchlist");
+      return;
+    }
+
+    const watchlistRef = collection(db, "watchlist");
+    const q = query(watchlistRef, where("userid", "==", user.uid));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const watchlistDoc = querySnapshot.docs[0];
+      const currentData = watchlistDoc.data();
+
+      await updateDoc(watchlistDoc.ref, {
+        count: Math.max((currentData.count || 1) - 1, 0),
+        watchlist: arrayRemove(movie.imdbID),
+      });
+
+      setLoading(false);
+
+      console.log("Movie removed from watchlist for user:", user.uid);
+    } else {
+      notify("No watchlist found for this user.");
+    }
+
+          if (setToggle) setToggle(!toggle); // Toggle to update the watchlist
+notify("Movie removed from watchlist successfully!");
+  } catch (error) {
+    console.error("Error removing movie from watchlist: ", error);
+    throw error;
+  }
+};
+
+
+
+if(Loading) {
+    (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500"></div>
+      </div>
+    )
+  }
+  
   return (
     <>
       {movie ? (
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+          <ToastContainer aria-label="Notification Toasts" />
           <div className="flex flex-col md:flex-row">
             <div className="md:w-1/3">
               <img
@@ -124,13 +227,23 @@ const MovieCard: React.FC<{ movie: MovieData }> = ({ movie }) => {
                 >
                   Show More Details
                 </button>
-                {user && (
-                  <button
-                    onClick={addToWishlist}
+                {currentUser && (
+                  !watchlist?.includes(movie.imdbID) ? (
+                     <button
+                    onClick={() => addTowatchlist(movie)}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition duration-150 ease-in-out"
                   >
                     Add to Watchlist
                   </button>
+                  ) : 
+                  (
+                    <button
+                    onClick={() => removeFromWatchlist(movie)}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition duration-150 ease-in-out"
+                  >
+                    Remove from Watchlist
+                  </button>
+                  )
                 )}
               </div>
             </div>
@@ -164,12 +277,21 @@ const MovieCard: React.FC<{ movie: MovieData }> = ({ movie }) => {
   );
 };
 
-const ProductPage: React.FC = () => {
+
+interface ProductProps {
+  currentUser?: any;
+  toggle?: boolean;
+  setToggle?: React.Dispatch<React.SetStateAction<boolean>>;
+  watchlist?: any[];
+}
+const ProductPage: React.FC<ProductProps> = ({ currentUser, toggle, setToggle, watchlist }) => {
   // State for search input and results
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<MovieData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  console.log("Current User--------------- ", watchlist);
 
   // Debounce function
   const debounce = (func: Function, delay: number) => {
@@ -236,7 +358,7 @@ const ProductPage: React.FC = () => {
       </div>
 
       <div>
-        {!isLoading && !error && <MovieCard movie={searchResults} />}
+        {!isLoading && !error && <MovieCard movie={searchResults} currentUser={currentUser} watchlist={watchlist} setToggle={setToggle} toggle={toggle}/>}
         {isLoading && <p>Loading...</p>}
         {error && <p className="text-red-500">{error}</p>}
       </div>

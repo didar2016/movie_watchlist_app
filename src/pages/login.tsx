@@ -3,26 +3,25 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 
-const Login: React.FC = () => {
+interface LoginProps {
+  currentUser?: unknown;
+  toggle?: boolean;
+  setToggle?: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const Login: React.FC<LoginProps> = ({ currentUser, toggle, setToggle }) => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
-
-
-
-  
-
-
-
-
     e.preventDefault();
     try {
       let response = await signInWithEmailAndPassword(auth, email, password);
       console.log("Login successful:", response);
       localStorage.setItem("user", JSON.stringify(response.user));
-      navigate("/watchlist");
+      if (setToggle) setToggle(!toggle); // Toggle to update the watchlist
+      navigate("/");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(err.message);
