@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +9,14 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
+
+
+
+  
+
+
+
+
     e.preventDefault();
     try {
       let response = await signInWithEmailAndPassword(auth, email, password);
@@ -20,6 +28,15 @@ const Login: React.FC = () => {
       alert(err.message);
     }
   };
+
+  // Check if a user is already logged in when the component mounts
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      // User is already logged in, redirect to watchlist
+      navigate('/');
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

@@ -3,11 +3,33 @@ import { Link } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { useAuth } from "../auth/context";
+import { useNavigate } from "react-router-dom";
+import { LuLogIn, LuLogOut} from "react-icons/lu";
+
 
 const Navbar: React.FC = () => {
   const { currentUser } = useAuth();
-
+const navigate = useNavigate();
   console.log("Current User:", currentUser);
+
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem('user');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  // Check for user in localStorage on component mount
+  React.useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser && !currentUser) {
+      console.log('User found in localStorage:', JSON.parse(storedUser));
+      // You might want to restore session or update context here
+    }
+  }, [currentUser]);
 
   const WatchlistIcon = ({ count = 5 }) => (
     <div className="relative">
@@ -71,6 +93,12 @@ const Navbar: React.FC = () => {
     setSearchTerm(e.target.value);
     setShowDropdown(true);
   };
+
+
+
+  
+
+
 
   return (
     <nav className="navbar flex justify-between items-center p-4 bg-gray-800 text-white">
@@ -140,9 +168,9 @@ const Navbar: React.FC = () => {
         </div>
         <div>
           {currentUser ? (
-            <button onClick={() => signOut(auth)}>Logout</button>
+            <button onClick={handleLogout}><LuLogOut/></button>
           ) : (
-            <Link to="/login">Login</Link>
+            <Link to="/login"><LuLogIn/></Link>
           )}
         </div>
       </div>

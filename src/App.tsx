@@ -23,15 +23,12 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/product" element={<ProductPage />} />
-          <Route path="/singleproduct" element={<MovieDetailPage />} />
-
-
-          
+          <Route path="/singleproduct/:id" element={<MovieDetailPage />} />
           <Route
             path="/watchlist"
             element={
               <PrivateRoute>
-                <Watchlist />
+          <Watchlist />
               </PrivateRoute>
             }
           />
