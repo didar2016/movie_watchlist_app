@@ -26,7 +26,7 @@ const Navbar: React.FC = () => {
         />
       </svg>
       {count > 0 && (
-        <span className="absolute -top-1 -right-[2px] bg-red-500 text-black bg-white text-[11px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+        <span className="absolute -top-1 -right-[2px] text-black bg-white text-[11px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
           {count > 99 ? "99+" : count}
         </span>
       )}
